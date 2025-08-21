@@ -64,7 +64,13 @@ def roll_item(item):
     if choose_match:
         options = choose_match.group(1).split(", ")
         choice = random.choice(options)
-        item = re.sub(r"\[choose: .+?\]", f"{choice} ({choice})", item)
+        # Replace [choose: ...] with (Choice)
+        item = re.sub(r"\[choose: .+?\]", f"({choice.capitalize()})", item)
+        # Capitalize first letter of item if needed
+        if item.lower().startswith("poster"):
+            item = "Poster " + item[len("Poster "):]  # keep Poster intact
+        elif item.lower().startswith("school text books"):
+            item = "School Text Book " + item[len("School Text Books "):]
     return item
 
 def roll_penalty(map_name):
@@ -154,8 +160,6 @@ if roll_button:
                         st.write("Success! Inside you find:")
                         locker_items = roll_locker(map_name)
                         st.write(f"- {locker_items}")
-                    else:
-                        st.write("Failed to open the locker.")
                 else:
                     new_items.append(item)
             loot_obtained[i] = (title, new_items)

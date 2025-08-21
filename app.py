@@ -2,7 +2,6 @@ import streamlit as st
 import random
 import re
 
-# --- Maps data ---
 maps = {
     "Midwich Elementary School": {
         "small_items": [
@@ -47,7 +46,6 @@ maps = {
     }
 }
 
-# --- Helpers ---
 def roll_dice(text):
     """Replace 1dX or NdX dice rolls with actual numbers."""
     dice_match = re.findall(r'(\d+)d(\d+)', text)
@@ -64,9 +62,7 @@ def roll_item(item):
     if choose_match:
         options = choose_match.group(1).split(", ")
         choice = random.choice(options)
-        # Replace [choose: ...] with (Choice)
         item = re.sub(r"\[choose: .+?\]", f"({choice.capitalize()})", item)
-        # Ensure item name stays correct
         if item.lower().startswith("poster"):
             item = "Poster " + item[len("Poster "):]
         elif item.lower().startswith("school text books"):
@@ -75,14 +71,13 @@ def roll_item(item):
 
 def roll_penalty(map_name):
     penalty_text = random.choice(maps[map_name]["penalties_table"])
-    penalty_text = roll_dice(penalty_text)  # automatically roll dice
+    penalty_text = roll_dice(penalty_text) 
     return penalty_text
 
 def roll_locker(map_name):
     result = random.choice(maps[map_name]["locker_table"])
     return roll_item(result)
 
-# --- Streamlit UI ---
 st.title("Scavenging")
 
 map_name = st.selectbox("Choose a map", list(maps.keys()))
@@ -98,7 +93,6 @@ if roll_button:
     loot_obtained = []
     mission_message = ""
 
-    # --- Determine outcome ---
     if 1 <= D20 <= 7:
         mission_message = "Mission fail! You run into one of the realm's denizens and are attacked!"
         st.write(mission_message)
@@ -145,7 +139,6 @@ if roll_button:
         st.write(mission_message)
         loot_obtained.extend([("Main Loot", [roll_item(random.choice(maps[map_name]["small_items"])) for _ in range(5)] + [roll_item(random.choice(maps[map_name]["large_items"]))])])
 
-    # --- Locker handling: include check in loot display ---
     for i, item_group in enumerate(loot_obtained):
         if isinstance(item_group, tuple):
             title, items = item_group
@@ -180,7 +173,6 @@ if roll_button:
                     locker_text += " -> Failed to open the locker."
                 loot_obtained[i] = locker_text
 
-    # --- Display loot ---
     if loot_obtained:
         st.write("You obtained:")
         for item_group in loot_obtained:
@@ -191,3 +183,4 @@ if roll_button:
                     st.write(f"{idx}. {item}")
             else:
                 st.write(f"- {item_group}")
+

@@ -33,10 +33,10 @@ maps_data = {
             "Bench"
         ],
         "penalties_table": [
-            {"desc": "A creature in the fog has found you and killed you.", "penalty": "-2", "matches": "1d12"},
-            {"desc": "You were injured and will take a day to recover.", "penalty": "-1", "matches": "1d6"},
-            {"desc": "If you were carrying something scavenged earlier, you lose it [but if you had nothing, you lost nothing]", "penalty": "0", "matches": "0"},
-            {"desc": "You were chased until you reached your campfire, unable to scavenge until the next day.", "penalty": "0", "matches": "0"}
+            {"desc": "A creature in the fog has found you and killed you. When you wake back up you have a -2 penalty for 1d12 matches and are unable to scavenge until the negative penalty is gone, or it is the next day.", "penalty": "-2", "matches": "1d12"},
+            {"desc": "You were injured and will take a day to recover. There is a -1 penalty for 1d6 matches.", "penalty": "-1", "matches": "1d6"},
+            {"desc": "If you were carrying something scavenged earlier, you lose it [but if you had nothing, you lost nothing].", "penalty": "0", "matches": "0"},
+            {"desc": "You were chased until you reached your campfire, but any time you try to scavenge again you feel something following you until you reach your campfire. You are unable to scavenge until the next day.", "penalty": "0", "matches": "0"}
         ],
         "locker_table": [
             "There is a feral rat that bites you badly enough to injure your hand, no more scavenging today",
@@ -69,9 +69,9 @@ def roll_penalty(map_data):
     penalty_entry = random.choice(map_data["penalties_table"])
     if penalty_entry["matches"] != "0":
         matches = roll_dice(penalty_entry["matches"])
+        return f"{penalty_entry['desc']} Penalty: {penalty_entry['penalty']} for {matches} matches."
     else:
-        matches = 0
-    return f"{penalty_entry['desc']} Penalty: {penalty_entry['penalty']} for {matches} matches."
+        return penalty_entry["desc"]
 
 def roll_locker(map_data):
     result = random.choice(map_data["locker_table"])

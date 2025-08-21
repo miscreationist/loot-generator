@@ -125,7 +125,7 @@ if roll_button:
         st.write(mission_message)
 
         option1 = [roll_item(random.choice(maps[map_name]["small_items"])) for _ in range(2)]
-        option2 = [roll_item(random.choice(maps[map_name]["medium_items"])) for _ in range(1)]
+        option2 = [roll_item(random.choice(maps[map_name]["medium_items"]))]
 
         loot_obtained.append(("Option 1: 2 small items", option1))
         loot_obtained.append(("Option 2: 1 medium item", option2))
@@ -134,7 +134,7 @@ if roll_button:
         mission_message = "Mission success! You found 1 large item OR 2 medium items."
         st.write(mission_message)
 
-        option1 = [roll_item(random.choice(maps[map_name]["large_items"])) for _ in range(1)]
+        option1 = [roll_item(random.choice(maps[map_name]["large_items"]))]
         option2 = [roll_item(random.choice(maps[map_name]["medium_items"])) for _ in range(2)]
 
         loot_obtained.append(("Option 1: 1 large item", option1))
@@ -145,44 +145,40 @@ if roll_button:
         st.write(mission_message)
         loot_obtained.extend([("Main Loot", [roll_item(random.choice(maps[map_name]["small_items"])) for _ in range(5)] + [roll_item(random.choice(maps[map_name]["large_items"]))])])
 
-    # --- Special locker handling (replaces locker with contents) ---
+    # --- Locker handling: include check in loot display ---
     for i, item_group in enumerate(loot_obtained):
         if isinstance(item_group, tuple):
-            # OR options
             title, items = item_group
             new_items = []
             for item in items:
                 if "Locked locker" in item:
-                    st.write(f"You found a locked locker! DC 15 to open.")
                     locker_roll = random.randint(1, 20)
-                    st.write(f"You rolled {locker_roll} for the locker check.")
+                    locker_text = f"Locked locker roll: {locker_roll} DC 15"
                     if locker_roll >= 15:
-                        st.write("Success! Inside you find:")
                         locker_items = roll_locker(map_name)
                         if isinstance(locker_items, list):
-                            new_items.extend(locker_items)
+                            locker_text += " -> Success! Inside: " + ", ".join(locker_items)
                         else:
-                            new_items.append(locker_items)
+                            locker_text += " -> Success! Inside: " + locker_items
                     else:
-                        st.write("Failed to open the locker. You get nothing from it.")
+                        locker_text += " -> Failed to open the locker."
+                    new_items.append(locker_text)
                 else:
                     new_items.append(item)
             loot_obtained[i] = (title, new_items)
         else:
             if "Locked locker" in item_group:
-                st.write(f"You found a locked locker! DC 15 to open.")
                 locker_roll = random.randint(1, 20)
-                st.write(f"You rolled {locker_roll} for the locker check.")
+                locker_text = f"Locked locker roll: {locker_roll} DC 15"
                 if locker_roll >= 15:
-                    st.write("Success! Inside you find:")
                     locker_items = roll_locker(map_name)
-                    # Replace locker with its contents
                     if isinstance(locker_items, list):
-                        loot_obtained[i:i+1] = locker_items
+                        locker_text += " -> Success! Inside: " + ", ".join(locker_items)
                     else:
-                        loot_obtained[i] = locker_items
+                        locker_text += " -> Success! Inside: " + locker_items
                 else:
-                    st.write("Failed to open the locker. You get nothing from it.")
+                    locker_text += " -> Failed to open the locker."
+                loot_obtained[i] = locker_text
 
     # --- Display loot ---
     if loot_obtained:

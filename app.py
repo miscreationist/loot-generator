@@ -34,7 +34,7 @@ maps = {
         "penalties_table": [
             "A creature in the fog has found you and killed you. When you wake back up you have a -2 penalty for 1d12 matches and are unable to scavenge until the negative penalty is gone, or it is the next day",
             "You were injured and will take a day to recover. There is a -1 penalty for 1d6 matches",
-            "If you were carrying something scavenged earlier, you lose it [but if you had nothing, you lost nothing]",
+            "If you were carrying something scavenged earlier, you lose it. If you had nothing, you lost nothing.",
             "You were chased until you reached your campfire, but any time you try to scavenge again you feel something following you until you reach your campfire. You are unable to scavenge until the next day"
         ],
         "locker_table": [
@@ -183,4 +183,5 @@ if roll_button:
                     st.write(f"{idx}. {item}")
             else:
                 st.write(f"- {item_group}")
+
 

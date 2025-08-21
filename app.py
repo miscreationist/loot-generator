@@ -64,7 +64,7 @@ def roll_item(item):
     if choose_match:
         options = choose_match.group(1).split(", ")
         choice = random.choice(options)
-        item = re.sub(r"\[choose: .+?\]", f"{choice} ({choice})", item)
+item = re.sub(r"\[choose: .+?\]", f"({choice})", item)
     return item
 
 def roll_penalty(map_name):
@@ -180,4 +180,5 @@ if roll_button:
                     st.write(f"{i}. {item}")
             else:
                 st.write(f"- {item_group}")
+
 

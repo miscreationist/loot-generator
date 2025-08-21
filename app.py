@@ -44,8 +44,7 @@ maps = {
             "1d2 brand new parts [+1 to your next trial]",
             "There are just bloodied body parts in there. Ew."
         ]
-    },
-    # You can add more maps here
+    }
 }
 
 # --- Helpers ---
@@ -69,51 +68,53 @@ def roll_item(item):
     return item
 
 def roll_penalty(map_name):
-    return random.choice(maps[map_name]["penalties_table"])
+    penalty_text = random.choice(maps[map_name]["penalties_table"])
+    penalty_text = roll_dice(penalty_text)  # automatically roll dice
+    return penalty_text
 
 def roll_locker(map_name):
     result = random.choice(maps[map_name]["locker_table"])
     return roll_item(result)
 
 # --- Streamlit UI ---
-st.title("Loot Generator")
+st.title("Scavenging")
 
 map_name = st.selectbox("Choose a map", list(maps.keys()))
 
-st.write("Roll a d20 to determine what happens on your mission!")
+st.write("Roll a D20 to Scavenge!")
 
-roll_button = st.button("Roll d20")
+roll_button = st.button("Roll D20")
 
 if roll_button:
-    d20 = random.randint(1, 20)
-    st.write(f"You rolled: {d20}")
+    D20 = random.randint(1, 20)
+    st.write(f"You rolled: {D20}")
 
     loot_obtained = []
     mission_message = ""
 
     # --- Determine outcome ---
-    if 1 <= d20 <= 7:
+    if 1 <= D20 <= 7:
         mission_message = "Mission fail! You run into one of the realm's denizens and are attacked!"
         st.write(mission_message)
         penalty = roll_penalty(map_name)
         st.write(f"Penalty: {penalty}")
 
-    elif 8 <= d20 <= 10:
+    elif 8 <= D20 <= 10:
         mission_message = "Unsuccessful mission. You find nothing."
         st.write(mission_message)
 
-    elif 11 <= d20 <= 13:
+    elif 11 <= D20 <= 13:
         mission_message = "Mission success! You found a memory fragment!"
         st.write(mission_message)
         bloodpoints = roll_dice("1d30")
         st.write(f"Add {bloodpoints} bloodpoints.")
 
-    elif 14 <= d20 <= 15:
+    elif 14 <= D20 <= 15:
         mission_message = "Mission success! You found a small item!"
         st.write(mission_message)
         loot_obtained.append(roll_item(random.choice(maps[map_name]["small_items"])))
 
-    elif 16 <= d20 <= 17:
+    elif 16 <= D20 <= 17:
         mission_message = "Mission success! You found 2 small items OR 1 medium item."
         st.write(mission_message)
 
@@ -123,7 +124,7 @@ if roll_button:
         loot_obtained.append(("Option 1: 2 small items", option1))
         loot_obtained.append(("Option 2: 1 medium item", option2))
 
-    elif 18 <= d20 <= 19:
+    elif 18 <= D20 <= 19:
         mission_message = "Mission success! You found 1 large item OR 2 medium items."
         st.write(mission_message)
 
@@ -133,7 +134,7 @@ if roll_button:
         loot_obtained.append(("Option 1: 1 large item", option1))
         loot_obtained.append(("Option 2: 2 medium items", option2))
 
-    elif d20 == 20:
+    elif D20 == 20:
         mission_message = "YO! You got a nice li’l haul! 5 small items and 1 large item!"
         st.write(mission_message)
         loot_obtained.extend([("Main Loot", [roll_item(random.choice(maps[map_name]["small_items"])) for _ in range(5)] + [roll_item(random.choice(maps[map_name]["large_items"]))])])
@@ -179,3 +180,4 @@ if roll_button:
                     st.write(f"{i}. {item}")
             else:
                 st.write(f"- {item_group}")
+

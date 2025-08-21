@@ -81,7 +81,8 @@ if roll_button:
     d20 = random.randint(1, 20)
     st.write(f"You rolled: {d20}")
 
-    loot_obtained = []
+    loot_obtained = None
+    loot_options = []
 
     # --- Determine outcome ---
     if 1 <= d20 <= 7:
@@ -94,43 +95,46 @@ if roll_button:
         bloodpoints = roll_dice("1d30")
         st.write(f"You found a memory fragment! Add {bloodpoints} bloodpoints.")
     elif 14 <= d20 <= 15:
-        st.write("Mission success! You found a small item!")
-        loot_obtained.append(roll_item(random.choice(map_data["small_items"])))
+        # Single small item
+        loot_obtained = [roll_item(random.choice(map_data["small_items"]))]
     elif 16 <= d20 <= 17:
-        st.write("Mission success! You found 2 small items OR 1 medium item.")
-        # Roll 2 small items
-        loot_obtained.append(roll_item(random.choice(map_data["small_items"])))
-        loot_obtained.append(roll_item(random.choice(map_data["small_items"])))
-        # Roll 1 medium item
-        loot_obtained.append(roll_item(random.choice(map_data["medium_items"])))
+        # 2 small items OR 1 medium item
+        option1 = [roll_item(random.choice(map_data["small_items"])),
+                   roll_item(random.choice(map_data["small_items"]))]
+        option2 = [roll_item(random.choice(map_data["medium_items"]))]
+        loot_options = [option1, option2]
     elif 18 <= d20 <= 19:
-        st.write("Mission success! You found 1 large item OR 2 medium items.")
-        # Roll 1 large item
-        loot_obtained.append(roll_item(random.choice(map_data["large_items"])))
-        # Roll 2 medium items
-        loot_obtained.append(roll_item(random.choice(map_data["medium_items"])))
-        loot_obtained.append(roll_item(random.choice(map_data["medium_items"])))
+        # 1 large item OR 2 medium items
+        option1 = [roll_item(random.choice(map_data["large_items"]))]
+        option2 = [roll_item(random.choice(map_data["medium_items"])),
+                   roll_item(random.choice(map_data["medium_items"]))]
+        loot_options = [option1, option2]
     elif d20 == 20:
-        st.write("YO! You got a nice li’l haul! 5 small items and 1 large item!")
-        for _ in range(5):
-            loot_obtained.append(roll_item(random.choice(map_data["small_items"])))
+        # 5 small items + 1 large item
+        loot_obtained = [roll_item(random.choice(map_data["small_items"])) for _ in range(5)]
         loot_obtained.append(roll_item(random.choice(map_data["large_items"])))
 
     # --- Special locker handling ---
-    for i, item in enumerate(loot_obtained):
-        if "Locked locker" in item:
-            st.write(f"You found a locked locker! DC 15 to open.")
-            locker_roll = random.randint(1, 20)
-            st.write(f"You rolled {locker_roll} for the locker check.")
-            if locker_roll >= 15:
-                st.write("Success! Inside you find:")
-                locker_items = roll_locker()
-                st.write(f"- {locker_items}")
-            else:
-                st.write("Failed to open the locker.")
+    if loot_obtained:
+        for i, item in enumerate(loot_obtained):
+            if "Locked locker" in item:
+                st.write(f"You found a locked locker! DC 15 to open.")
+                locker_roll = random.randint(1, 20)
+                st.write(f"You rolled {locker_roll} for the locker check.")
+                if locker_roll >= 15:
+                    st.write("Success! Inside you find:")
+                    locker_items = roll_locker()
+                    st.write(f"- {locker_items}")
+                else:
+                    st.write("Failed to open the locker.")
 
-    # --- Display loot ---
-    st.write("You obtained:")
-    for item in loot_obtained:
-        if "Locked locker" not in item:
-            st.write(f"- {item}")
+    if loot_options:
+        st.write("You obtained (choose one option):")
+        for idx, option in enumerate(loot_options, 1):
+            st.write(f"Option {idx}: {', '.join(option)}")
+
+    if loot_obtained:
+        st.write("You obtained:")
+        for item in loot_obtained:
+            if "Locked locker" not in item:
+                st.write(f"- {item}")

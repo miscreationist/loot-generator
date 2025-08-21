@@ -133,11 +133,11 @@ if roll_button:
 
         loot_obtained.append(("Option 1: 1 large item", option1))
         loot_obtained.append(("Option 2: 2 medium items", option2))
-
-    elif D20 == 20:
+        
+    elif d20 == 20:
         mission_message = "YO! You got a nice li’l haul! 5 small items and 1 large item!"
         st.write(mission_message)
-       loot_obtained.extend([("Main Loot", [roll_item(random.choice(maps[map_name]["small_items"])) for _ in range(5)] + [roll_item(random.choice(maps[map_name]["large_items"]))])])
+        loot_obtained.extend([("Main Loot", [roll_item(random.choice(maps[map_name]["small_items"])) for _ in range(5)] + [roll_item(random.choice(maps[map_name]["large_items"]))])])
 
     for i, item_group in enumerate(loot_obtained):
         if isinstance(item_group, tuple):
@@ -183,6 +183,7 @@ if roll_button:
                     st.write(f"{idx}. {item}")
             else:
                 st.write(f"- {item_group}")
+
 
 
 

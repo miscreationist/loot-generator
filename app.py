@@ -2,51 +2,55 @@ import streamlit as st
 import random
 import re
 
-# --- Map Data: Midwich Elementary School ---
-map_data = {
-    "small_items": [
-        "1d4 pieces of chalk",
-        "Poster [choose: star, sunflower, monkey]",
-        "1d4 stack of music paper",
-        "Pens/Pencils",
-        "1d8 thumb tacks",
-        "1d4 Medkit [+1 to your next trial]",
-        "1d6 Metallic star stickers"
-    ],
-    "medium_items": [
-        "Globe, out of date",
-        "School text books [choose: biology, history, english]",
-        "Projector, requires power",
-        "Desk chair",
-        "Mop and bucket",
-        "Tray",
-        "Duffle bag with 1d4 shirts",
-        "Locked locker. DC 15 to break it open. If you do, roll on locker table",
-        "VHS tapes. Looks to be kids movies",
-        "Wall clock"
-    ],
-    "large_items": [
-        "1d4 + 2 Teachers chairs",
-        "Desk",
-        "Media/Book cart, but it is upstairs, you need help carrying it down the stairs, lest the denizens of the realm hear you",
-        "Bench"
-    ],
-    "penalties_table": [
-        "A creature in the fog has found you and killed you. When you wake back up you have a -2 penalty for 1d12 matches and are unable to scavenge until the negative penalty is gone, or it is the next day",
-        "You were injured and will take a day to recover. There is a -1 penalty for 1d6 matches",
-        "If you were carrying something scavenged earlier, you lose it [but if you had nothing, you lost nothing]",
-        "You were chased until you reached your campfire, but any time you try to scavenge again you feel something following you until you reach your campfire. You are unable to scavenge until the next day"
-    ],
-    "locker_table": [
-        "There is a feral rat that bites you badly enough to injure your hand, no more scavenging today",
-        "A small pair of shoes",
-        "1d2 brand new parts [+1 to your next trial]",
-        "There are just bloodied body parts in there. Ew."
-    ]
+# --- Maps data ---
+maps = {
+    "Midwich Elementary School": {
+        "small_items": [
+            "1d4 pieces of chalk",
+            "Poster [choose: star, sunflower, monkey]",
+            "1d4 stack of music paper",
+            "Pens/Pencils",
+            "1d8 thumb tacks",
+            "1d4 Medkit [+1 to your next trial]",
+            "1d6 Metallic star stickers"
+        ],
+        "medium_items": [
+            "Globe, out of date",
+            "School text books [choose: biology, history, english]",
+            "Projector, requires power",
+            "Desk chair",
+            "Mop and bucket",
+            "Tray",
+            "Duffle bag with 1d4 shirts",
+            "Locked locker. DC 15 to break it open. If you do, roll on locker table",
+            "VHS tapes. Looks to be kids movies",
+            "Wall clock"
+        ],
+        "large_items": [
+            "1d4 + 2 Teachers chairs",
+            "Desk",
+            "Media/Book cart, but it is upstairs, you need help carrying it down the stairs, lest the denizens of the realm hear you",
+            "Bench"
+        ],
+        "penalties_table": [
+            "A creature in the fog has found you and killed you. When you wake back up you have a -2 penalty for 1d12 matches and are unable to scavenge until the negative penalty is gone, or it is the next day",
+            "You were injured and will take a day to recover. There is a -1 penalty for 1d6 matches",
+            "If you were carrying something scavenged earlier, you lose it [but if you had nothing, you lost nothing]",
+            "You were chased until you reached your campfire, but any time you try to scavenge again you feel something following you until you reach your campfire. You are unable to scavenge until the next day"
+        ],
+        "locker_table": [
+            "There is a feral rat that bites you badly enough to injure your hand, no more scavenging today",
+            "A small pair of shoes",
+            "1d2 brand new parts [+1 to your next trial]",
+            "There are just bloodied body parts in there. Ew."
+        ]
+    },
+    # You can add more maps here
 }
 
 # --- Helpers ---
 def roll_dice(text):
+    """Replace 1dX or NdX dice rolls with actual numbers."""
     dice_match = re.findall(r'(\d+)d(\d+)', text)
     for match in dice_match:
         num, sides = int(match[0]), int(match[1])
@@ -55,23 +59,26 @@ def roll_dice(text):
     return text
 
 def roll_item(item):
+    """Roll item, replace choose options with a random pick (in parentheses)."""
     item = roll_dice(item)
     choose_match = re.search(r"\[choose: (.+?)\]", item)
     if choose_match:
         options = choose_match.group(1).split(", ")
         choice = random.choice(options)
-        item = re.sub(r"\[choose: .+?\]", choice, item)
+        item = re.sub(r"\[choose: .+?\]", f"{choice} ({choice})", item)
     return item
 
-def roll_penalty():
-    return random.choice(map_data["penalties_table"])
+def roll_penalty(map_name):
+    return random.choice(maps[map_name]["penalties_table"])
 
-def roll_locker():
-    result = random.choice(map_data["locker_table"])
+def roll_locker(map_name):
+    result = random.choice(maps[map_name]["locker_table"])
     return roll_item(result)
 
 # --- Streamlit UI ---
-st.title("Midwich Elementary School Loot Simulator")
+st.title("Loot Generator")
+
+map_name = st.selectbox("Choose a map", list(maps.keys()))
 
 st.write("Roll a d20 to determine what happens on your mission!")
 
@@ -82,55 +89,93 @@ if roll_button:
     st.write(f"You rolled: {d20}")
 
     loot_obtained = []
+    mission_message = ""
 
     # --- Determine outcome ---
     if 1 <= d20 <= 7:
-        st.write("Mission fail! You run into one of the realm's denizens and are attacked!")
-        penalty = roll_penalty()
+        mission_message = "Mission fail! You run into one of the realm's denizens and are attacked!"
+        st.write(mission_message)
+        penalty = roll_penalty(map_name)
         st.write(f"Penalty: {penalty}")
+
     elif 8 <= d20 <= 10:
-        st.write("Unsuccessful mission. You find nothing.")
+        mission_message = "Unsuccessful mission. You find nothing."
+        st.write(mission_message)
+
     elif 11 <= d20 <= 13:
+        mission_message = "Mission success! You found a memory fragment!"
+        st.write(mission_message)
         bloodpoints = roll_dice("1d30")
-        st.write(f"You found a memory fragment! Add {bloodpoints} bloodpoints.")
+        st.write(f"Add {bloodpoints} bloodpoints.")
+
     elif 14 <= d20 <= 15:
-        st.write("Mission success! You found a small item!")
-        loot_obtained.append(roll_item(random.choice(map_data["small_items"])))
+        mission_message = "Mission success! You found a small item!"
+        st.write(mission_message)
+        loot_obtained.append(roll_item(random.choice(maps[map_name]["small_items"])))
+
     elif 16 <= d20 <= 17:
-        st.write("Mission success! You found 2 small items OR 1 medium item.")
-        # Roll 2 small items
-        loot_obtained.append(roll_item(random.choice(map_data["small_items"])))
-        loot_obtained.append(roll_item(random.choice(map_data["small_items"])))
-        # Roll 1 medium item
-        loot_obtained.append(roll_item(random.choice(map_data["medium_items"])))
+        mission_message = "Mission success! You found 2 small items OR 1 medium item."
+        st.write(mission_message)
+
+        option1 = [roll_item(random.choice(maps[map_name]["small_items"])) for _ in range(2)]
+        option2 = [roll_item(random.choice(maps[map_name]["medium_items"]))]
+
+        loot_obtained.append(("Option 1: 2 small items", option1))
+        loot_obtained.append(("Option 2: 1 medium item", option2))
+
     elif 18 <= d20 <= 19:
-        st.write("Mission success! You found 1 large item OR 2 medium items.")
-        # Roll 1 large item
-        loot_obtained.append(roll_item(random.choice(map_data["large_items"])))
-        # Roll 2 medium items
-        loot_obtained.append(roll_item(random.choice(map_data["medium_items"])))
-        loot_obtained.append(roll_item(random.choice(map_data["medium_items"])))
+        mission_message = "Mission success! You found 1 large item OR 2 medium items."
+        st.write(mission_message)
+
+        option1 = [roll_item(random.choice(maps[map_name]["large_items"]))]
+        option2 = [roll_item(random.choice(maps[map_name]["medium_items"])) for _ in range(2)]
+
+        loot_obtained.append(("Option 1: 1 large item", option1))
+        loot_obtained.append(("Option 2: 2 medium items", option2))
+
     elif d20 == 20:
-        st.write("YO! You got a nice li’l haul! 5 small items and 1 large item!")
-        for _ in range(5):
-            loot_obtained.append(roll_item(random.choice(map_data["small_items"])))
-        loot_obtained.append(roll_item(random.choice(map_data["large_items"])))
+        mission_message = "YO! You got a nice li’l haul! 5 small items and 1 large item!"
+        st.write(mission_message)
+        loot_obtained.extend([("Main Loot", [roll_item(random.choice(maps[map_name]["small_items"])) for _ in range(5)] + [roll_item(random.choice(maps[map_name]["large_items"]))])])
 
     # --- Special locker handling ---
-    for i, item in enumerate(loot_obtained):
-        if "Locked locker" in item:
-            st.write(f"You found a locked locker! DC 15 to open.")
-            locker_roll = random.randint(1, 20)
-            st.write(f"You rolled {locker_roll} for the locker check.")
-            if locker_roll >= 15:
-                st.write("Success! Inside you find:")
-                locker_items = roll_locker()
-                st.write(f"- {locker_items}")
-            else:
-                st.write("Failed to open the locker.")
+    for i, item_group in enumerate(loot_obtained):
+        if isinstance(item_group, tuple):
+            # OR options
+            title, items = item_group
+            new_items = []
+            for item in items:
+                if "Locked locker" in item:
+                    st.write(f"You found a locked locker! DC 15 to open.")
+                    locker_roll = random.randint(1, 20)
+                    st.write(f"You rolled {locker_roll} for the locker check.")
+                    if locker_roll >= 15:
+                        st.write("Success! Inside you find:")
+                        locker_items = roll_locker(map_name)
+                        st.write(f"- {locker_items}")
+                    else:
+                        st.write("Failed to open the locker.")
+                else:
+                    new_items.append(item)
+            loot_obtained[i] = (title, new_items)
+        else:
+            if "Locked locker" in item_group:
+                st.write(f"You found a locked locker! DC 15 to open.")
+                locker_roll = random.randint(1, 20)
+                st.write(f"You rolled {locker_roll} for the locker check.")
+                if locker_roll >= 15:
+                    st.write("Success! Inside you find:")
+                    locker_items = roll_locker(map_name)
+                    st.write(f"- {locker_items}")
 
     # --- Display loot ---
-    st.write("You obtained:")
-    for item in loot_obtained:
-        if "Locked locker" not in item:
-            st.write(f"- {item}")
+    if loot_obtained:
+        st.write("You obtained:")
+        for item_group in loot_obtained:
+            if isinstance(item_group, tuple):
+                title, items = item_group
+                st.write(f"**{title}**")
+                for i, item in enumerate(items, start=1):
+                    st.write(f"{i}. {item}")
+            else:
+                st.write(f"- {item_group}")

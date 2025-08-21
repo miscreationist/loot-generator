@@ -66,9 +66,9 @@ def roll_item(item):
         choice = random.choice(options)
         # Replace [choose: ...] with (Choice)
         item = re.sub(r"\[choose: .+?\]", f"({choice.capitalize()})", item)
-        # Capitalize first letter of item if needed
+        # Ensure item name stays correct
         if item.lower().startswith("poster"):
-            item = "Poster " + item[len("Poster "):]  # keep Poster intact
+            item = "Poster " + item[len("Poster "):]
         elif item.lower().startswith("school text books"):
             item = "School Text Book " + item[len("School Text Books "):]
     return item
@@ -125,7 +125,7 @@ if roll_button:
         st.write(mission_message)
 
         option1 = [roll_item(random.choice(maps[map_name]["small_items"])) for _ in range(2)]
-        option2 = [roll_item(random.choice(maps[map_name]["medium_items"]))]
+        option2 = [roll_item(random.choice(maps[map_name]["medium_items"])) for _ in range(1)]
 
         loot_obtained.append(("Option 1: 2 small items", option1))
         loot_obtained.append(("Option 2: 1 medium item", option2))
@@ -134,7 +134,7 @@ if roll_button:
         mission_message = "Mission success! You found 1 large item OR 2 medium items."
         st.write(mission_message)
 
-        option1 = [roll_item(random.choice(maps[map_name]["large_items"]))]
+        option1 = [roll_item(random.choice(maps[map_name]["large_items"])) for _ in range(1)]
         option2 = [roll_item(random.choice(maps[map_name]["medium_items"])) for _ in range(2)]
 
         loot_obtained.append(("Option 1: 1 large item", option1))
@@ -145,7 +145,7 @@ if roll_button:
         st.write(mission_message)
         loot_obtained.extend([("Main Loot", [roll_item(random.choice(maps[map_name]["small_items"])) for _ in range(5)] + [roll_item(random.choice(maps[map_name]["large_items"]))])])
 
-    # --- Special locker handling ---
+    # --- Special locker handling (replaces locker with contents) ---
     for i, item_group in enumerate(loot_obtained):
         if isinstance(item_group, tuple):
             # OR options
@@ -159,7 +159,12 @@ if roll_button:
                     if locker_roll >= 15:
                         st.write("Success! Inside you find:")
                         locker_items = roll_locker(map_name)
-                        st.write(f"- {locker_items}")
+                        if isinstance(locker_items, list):
+                            new_items.extend(locker_items)
+                        else:
+                            new_items.append(locker_items)
+                    else:
+                        st.write("Failed to open the locker. You get nothing from it.")
                 else:
                     new_items.append(item)
             loot_obtained[i] = (title, new_items)
@@ -171,7 +176,13 @@ if roll_button:
                 if locker_roll >= 15:
                     st.write("Success! Inside you find:")
                     locker_items = roll_locker(map_name)
-                    st.write(f"- {locker_items}")
+                    # Replace locker with its contents
+                    if isinstance(locker_items, list):
+                        loot_obtained[i:i+1] = locker_items
+                    else:
+                        loot_obtained[i] = locker_items
+                else:
+                    st.write("Failed to open the locker. You get nothing from it.")
 
     # --- Display loot ---
     if loot_obtained:
@@ -180,7 +191,7 @@ if roll_button:
             if isinstance(item_group, tuple):
                 title, items = item_group
                 st.write(f"**{title}**")
-                for i, item in enumerate(items, start=1):
-                    st.write(f"{i}. {item}")
+                for idx, item in enumerate(items, start=1):
+                    st.write(f"{idx}. {item}")
             else:
                 st.write(f"- {item_group}")

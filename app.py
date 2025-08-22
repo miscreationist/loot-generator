@@ -123,7 +123,7 @@ roll_button = st.button("Roll D20")
 if roll_button:
     if map_name == "Random Map":
         map_name = random.choice(list(maps.keys()))
-        st.write(f"🎲 Randomly selected map: **{map_name}**")
+        st.write(f" Randomly selected map: **{map_name}**")
 
     D20 = random.randint(1, 20)
     st.write(f"You rolled: {D20}")
@@ -222,3 +222,4 @@ if roll_button:
                     st.write(f"{idx}. {item}")
             else:
                 st.write(f"- {item_group}")
+

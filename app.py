@@ -1,7 +1,6 @@
 import streamlit as st
 import random
 import re
-
 maps = {
     "Dvarka Darkwood - Nostromo": {
         "small_items": [
@@ -20,7 +19,7 @@ maps = {
             "Portable light! Seems to have a limited power source, though [1d10 uses]",
             "Utility belt from the astronaut suit",
             "Head lamp from the astronaut helmet — 1d10 uses",
-            "1d6 Large, blue plants. Can have different effects! 1d4 to figure out what this bundle is",
+            "Blue plants bundle [special]",
             "Yellow tarp, very worn, but can be used as ground cover",
             "Canister of fuel, 1/4 of the way full"
         ],
@@ -30,6 +29,12 @@ maps = {
             "Metal door, definitely busted, but still sturdy looking",
             "Computer monitor, though it does look rather busted up. Maybe with some extra components you may be able to fix it; could double as a TV monitor [1d6 +2 amount of components to fix as well as a rolling 1d20 with a DC 15 to fix it properly]"
         ],
+        "blue_plants_effects": [
+            "Mild pain medication, grants +1 to your next trial",
+            "Stimulant similar to caffeine! +1 to scavenging attempts",
+            "Oh no, you really should not have eaten this; No Mither for 1d6 trials [-2 for that duration]",
+            "Oh ho?? This tastes like a french fry if you roast it over a fire. No benefits, but it makes you feel happy."
+        ]
     },
     "Dvarka Darkwood - Toba Landing": {
         "small_items": [
@@ -40,15 +45,15 @@ maps = {
             "A tablet, but you do not recognize the language it is in [unless you are Gabriel or HUX]"
         ],
         "medium_items": [
-            "Large, spiky fruit (roll 1d20, DC 12)",
+            "Spiky fruit [special_dc12]",
             "Dried sap from a tree — it dried in large chunks; when you burn it, it smells like incense",
-            "OH NO! A Dvarka spider (roll 1d20, DC 10)",
+            "Dvarka spider [special_dc10]",
             "Segment of the orange spiky tree — tastes like mango and honey had a child with a chili!",
-            "Shelf mushroom! NOT EDIBLE (roll 1d20, DC 15 if licked)",
+            "Shelf mushroom [special_dc15]",
             "Messenger Bag. Looks like even those from the future still use them"
         ],
         "large_items": [
-            "Storage crate (1d5+1 medkit/toolbox)",
+            "Storage crate [special_storage]",
             "Giant gourd from a tree – tastes like a spicy eggplant when cooked!",
             "Solar powered generator!! You will need 3 people to bring this with you",
             "Powered drill! Looks like it still has a small charge for a small project. Once it is used, though, it falls dead, and fades away into fog",
@@ -100,6 +105,9 @@ penalties_table = [
     "You were chased until you reached your campfire, but any time you try to scavenge again you feel something following you until you reach your campfire. You are unable to scavenge until the next day"
 ]
 
+# ========================
+# HELPERS
+# ========================
 def roll_dice(text):
     dice_match = re.findall(r'(\d+)d(\d+)', text)
     for match in dice_match:
@@ -108,25 +116,39 @@ def roll_dice(text):
         text = text.replace(f"{num}d{sides}", str(total), 1)
     return text
 
-def resolve_special_items(item):
-    """Handle DC checks and dice effects for special items."""
-    if "Large, spiky fruit" in item:
-        roll = random.randint(1, 20)
-        return f"{item} | Rolled {roll} vs DC 12 -> {'Success (edible!)' if roll >= 12 else 'Failure (you fall ill, scavenging ends)'}"
-    if "Dvarka spider" in item:
-        roll = random.randint(1, 20)
-        return f"{item} | Rolled {roll} vs DC 10 -> {'Success (killed it)' if roll >= 10 else 'Failure (bitten, scavenging ends)'}"
-    if "Shelf mushroom" in item:
-        roll = random.randint(1, 20)
-        return f"{item} | Rolled {roll} vs DC 15 -> {'Success (resisted hallucinations)' if roll >= 15 else 'Failure (hallucinations, scavenging ends)'}"
-    if "Storage crate" in item:
-        roll = random.randint(1, 5) + 1
-        return f"{item} | Contains {roll} medkits/toolboxes [+1 to trials]"
-    return item
+def roll_item(item, map_name):
+    # Special case handling
+    if item == "Blue plants bundle [special]":
+        count = random.randint(1, 6)
+        effects = []
+        for _ in range(count):
+            effect = random.choice(maps[map_name]["blue_plants_effects"])
+            if "1d6" in effect:
+                effect = roll_dice(effect)
+            effects.append(effect)
+        return f"{count} Large, blue plants. Effects: " + "; ".join(effects)
 
-def roll_item(item):
+    if item == "Spiky fruit [special_dc12]":
+        roll = random.randint(1, 20)
+        return f"Spiky fruit: Rolled {roll} vs DC12 -> " + ("Success! Cooked safely, tastes like sweet lemon." if roll >= 12 else "Failure! Poisoned, scavenging ends.")
+
+    if item == "Dvarka spider [special_dc10]":
+        roll = random.randint(1, 20)
+        return f"Dvarka spider: Rolled {roll} vs DC10 -> " + ("Success! Killed it, safe to continue." if roll >= 10 else "Failure! Bitten, scavenging ends.")
+
+    if item == "Shelf mushroom [special_dc15]":
+        roll = random.randint(1, 20)
+        return f"Shelf mushroom: Rolled {roll} vs DC15 -> " + ("Success! No hallucinations." if roll >= 15 else "Failure! Hallucinations, scavenging ends.")
+
+    if item == "Storage crate [special_storage]":
+        amount = random.randint(1, 5) + 1
+        choice = random.choice(["medkits", "toolboxes"])
+        return f"Storage crate: Contains {amount} {choice} [+1 to trials you bring it to]"
+
+    # Normal dice replacement
     item = roll_dice(item)
-    item = resolve_special_items(item)
+
+    # Handle [choose:]
     choose_match = re.search(r"\[choose: (.+?)\]", item)
     if choose_match:
         options = choose_match.group(1).split(", ")
@@ -144,8 +166,11 @@ def roll_penalty():
 
 def roll_locker(map_name):
     result = random.choice(maps[map_name]["locker_table"])
-    return roll_item(result)
+    return roll_item(result, map_name)
 
+# ========================
+# STREAMLIT APP
+# ========================
 st.title("Scavenging")
 
 map_options = ["Random Map"] + list(maps.keys())
@@ -184,29 +209,59 @@ if st.button("Roll D20"):
     elif 14 <= D20 <= 15:
         mission_message = "Mission success! You found a small item!"
         st.write(mission_message)
-        loot_obtained.append(roll_item(random.choice(maps[chosen_map]["small_items"])))
+        loot_obtained.append(roll_item(random.choice(maps[chosen_map]["small_items"]), chosen_map))
 
     elif 16 <= D20 <= 17:
         mission_message = "Mission success! You found 2 small items OR 1 medium item."
         st.write(mission_message)
-        option1 = [roll_item(random.choice(maps[chosen_map]["small_items"])) for _ in range(2)]
-        option2 = [roll_item(random.choice(maps[chosen_map]["medium_items"]))]
+        option1 = [roll_item(random.choice(maps[chosen_map]["small_items"]), chosen_map) for _ in range(2)]
+        option2 = [roll_item(random.choice(maps[chosen_map]["medium_items"]), chosen_map)]
         loot_obtained.append(("Option 1: 2 small items", option1))
         loot_obtained.append(("Option 2: 1 medium item", option2))
 
     elif 18 <= D20 <= 19:
         mission_message = "Mission success! You found 1 large item OR 2 medium items."
         st.write(mission_message)
-        option1 = [roll_item(random.choice(maps[chosen_map]["large_items"]))]
-        option2 = [roll_item(random.choice(maps[chosen_map]["medium_items"])) for _ in range(2)]
+        option1 = [roll_item(random.choice(maps[chosen_map]["large_items"]), chosen_map)]
+        option2 = [roll_item(random.choice(maps[chosen_map]["medium_items"]), chosen_map) for _ in range(2)]
         loot_obtained.append(("Option 1: 1 large item", option1))
         loot_obtained.append(("Option 2: 2 medium items", option2))
 
     elif D20 == 20:
         mission_message = "YO! You got a nice li’l haul! 5 small items and 1 large item!"
         st.write(mission_message)
-        loot_obtained.extend([("Main Loot", [roll_item(random.choice(maps[chosen_map]["small_items"])) for _ in range(5)] + [roll_item(random.choice(maps[chosen_map]["large_items"]))])])
+        loot_obtained.extend([("Main Loot", [roll_item(random.choice(maps[chosen_map]["small_items"]), chosen_map) for _ in range(5)] + [roll_item(random.choice(maps[chosen_map]["large_items"]), chosen_map)])])
 
+    # Locker resolution
+    for i, item_group in enumerate(loot_obtained):
+        if isinstance(item_group, tuple):
+            title, items = item_group
+            new_items = []
+            for item in items:
+                if "Locked locker" in item:
+                    locker_roll = random.randint(1, 20)
+                    locker_text = f"Locked locker roll: {locker_roll} DC 15"
+                    if locker_roll >= 15:
+                        locker_items = roll_locker(chosen_map)
+                        locker_text += f" -> Success! Inside: {locker_items}"
+                    else:
+                        locker_text += " -> Failed to open the locker."
+                    new_items.append(locker_text)
+                else:
+                    new_items.append(item)
+            loot_obtained[i] = (title, new_items)
+        else:
+            if "Locked locker" in str(item_group):
+                locker_roll = random.randint(1, 20)
+                locker_text = f"Locked locker roll: {locker_roll} DC 15"
+                if locker_roll >= 15:
+                    locker_items = roll_locker(chosen_map)
+                    locker_text += f" -> Success! Inside: {locker_items}"
+                else:
+                    locker_text += " -> Failed to open the locker."
+                loot_obtained[i] = locker_text
+
+    # Print results
     if loot_obtained:
         st.write("You obtained:")
         for item_group in loot_obtained:

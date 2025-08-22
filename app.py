@@ -31,6 +31,31 @@ maps = {
             "Computer monitor, though it does look rather busted up. Maybe with some extra components you may be able to fix it; could double as a TV monitor [1d6 +2 amount of components to fix as well as a rolling 1d20 with a DC 15 to fix it properly]"
         ],
     },
+    "Dvarka Darkwood - Toba Landing": {
+        "small_items": [
+            "Purple fruit, tastes like a prickly pear",
+            "Feather from one of the alien birds, useless but pretty",
+            "Metal cup! It stirs automatically! And it seems like it keeps cold things cold",
+            "A small bundle of wires/cables",
+            "A tablet, but you do not recognize the language it is in [unless you are Gabriel or HUX]"
+        ],
+        "medium_items": [
+            "Large, spiky fruit (roll 1d20, DC 12)",
+            "Dried sap from a tree — it dried in large chunks; when you burn it, it smells like incense",
+            "OH NO! A Dvarka spider (roll 1d20, DC 10)",
+            "Segment of the orange spiky tree — tastes like mango and honey had a child with a chili!",
+            "Shelf mushroom! NOT EDIBLE (roll 1d20, DC 15 if licked)",
+            "Messenger Bag. Looks like even those from the future still use them"
+        ],
+        "large_items": [
+            "Storage crate (1d5+1 medkit/toolbox)",
+            "Giant gourd from a tree – tastes like a spicy eggplant when cooked!",
+            "Solar powered generator!! You will need 3 people to bring this with you",
+            "Powered drill! Looks like it still has a small charge for a small project. Once it is used, though, it falls dead, and fades away into fog",
+            "Fire extinguisher, but whoa, is it HUGE",
+            "Large purple fruit. Looks and tastes just like a sweet potato when cooked"
+        ]
+    },
     "Midwich Elementary School": {
         "small_items": [
             "1d4 pieces of chalk",
@@ -83,8 +108,25 @@ def roll_dice(text):
         text = text.replace(f"{num}d{sides}", str(total), 1)
     return text
 
+def resolve_special_items(item):
+    """Handle DC checks and dice effects for special items."""
+    if "Large, spiky fruit" in item:
+        roll = random.randint(1, 20)
+        return f"{item} | Rolled {roll} vs DC 12 -> {'Success (edible!)' if roll >= 12 else 'Failure (you fall ill, scavenging ends)'}"
+    if "Dvarka spider" in item:
+        roll = random.randint(1, 20)
+        return f"{item} | Rolled {roll} vs DC 10 -> {'Success (killed it)' if roll >= 10 else 'Failure (bitten, scavenging ends)'}"
+    if "Shelf mushroom" in item:
+        roll = random.randint(1, 20)
+        return f"{item} | Rolled {roll} vs DC 15 -> {'Success (resisted hallucinations)' if roll >= 15 else 'Failure (hallucinations, scavenging ends)'}"
+    if "Storage crate" in item:
+        roll = random.randint(1, 5) + 1
+        return f"{item} | Contains {roll} medkits/toolboxes [+1 to trials]"
+    return item
+
 def roll_item(item):
     item = roll_dice(item)
+    item = resolve_special_items(item)
     choose_match = re.search(r"\[choose: (.+?)\]", item)
     if choose_match:
         options = choose_match.group(1).split(", ")
@@ -164,34 +206,6 @@ if st.button("Roll D20"):
         mission_message = "YO! You got a nice li’l haul! 5 small items and 1 large item!"
         st.write(mission_message)
         loot_obtained.extend([("Main Loot", [roll_item(random.choice(maps[chosen_map]["small_items"])) for _ in range(5)] + [roll_item(random.choice(maps[chosen_map]["large_items"]))])])
-
-    for i, item_group in enumerate(loot_obtained):
-        if isinstance(item_group, tuple):
-            title, items = item_group
-            new_items = []
-            for item in items:
-                if "Locked locker" in item:
-                    locker_roll = random.randint(1, 20)
-                    locker_text = f"Locked locker roll: {locker_roll} DC 15"
-                    if locker_roll >= 15:
-                        locker_items = roll_locker(chosen_map)
-                        locker_text += f" -> Success! Inside: {locker_items}"
-                    else:
-                        locker_text += " -> Failed to open the locker."
-                    new_items.append(locker_text)
-                else:
-                    new_items.append(item)
-            loot_obtained[i] = (title, new_items)
-        else:
-            if "Locked locker" in item_group:
-                locker_roll = random.randint(1, 20)
-                locker_text = f"Locked locker roll: {locker_roll} DC 15"
-                if locker_roll >= 15:
-                    locker_items = roll_locker(chosen_map)
-                    locker_text += f" -> Success! Inside: {locker_items}"
-                else:
-                    locker_text += " -> Failed to open the locker."
-                loot_obtained[i] = locker_text
 
     if loot_obtained:
         st.write("You obtained:")

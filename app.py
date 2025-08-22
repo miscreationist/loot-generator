@@ -68,7 +68,6 @@ maps = {
     }
 }
 
-# Shared penalties table
 penalties_table = [
     "A creature in the fog has found you and killed you. When you wake back up you have a -2 penalty for 1d12 matches and are unable to scavenge until the negative penalty is gone, or it is the next day",
     "You were injured and will take a day to recover. There is a -1 penalty for 1d6 matches",
@@ -107,18 +106,17 @@ def roll_locker(map_name):
 
 st.title("Scavenging")
 
-# Map selection with "Random Map" option
 map_options = ["Random Map"] + list(maps.keys())
-map_name = st.selectbox("Choose a map", map_options)
+map_choice = st.selectbox("Choose a map", map_options)
 
-if map_name == "Random Map":
-    map_name = random.choice(list(maps.keys()))
+chosen_map = map_choice
+if map_choice == "Random Map":
+    chosen_map = random.choice(list(maps.keys()))
 
 st.write("Roll a D20 to Scavenge!")
 
-roll_button = st.button("Roll D20")
-
-if roll_button:
+if st.button("Roll D20"):
+    st.write(f"**Map Selected:** {chosen_map}")
     D20 = random.randint(1, 20)
     st.write(f"You rolled: {D20}")
 
@@ -144,28 +142,28 @@ if roll_button:
     elif 14 <= D20 <= 15:
         mission_message = "Mission success! You found a small item!"
         st.write(mission_message)
-        loot_obtained.append(roll_item(random.choice(maps[map_name]["small_items"])))
+        loot_obtained.append(roll_item(random.choice(maps[chosen_map]["small_items"])))
 
     elif 16 <= D20 <= 17:
         mission_message = "Mission success! You found 2 small items OR 1 medium item."
         st.write(mission_message)
-        option1 = [roll_item(random.choice(maps[map_name]["small_items"])) for _ in range(2)]
-        option2 = [roll_item(random.choice(maps[map_name]["medium_items"]))]
+        option1 = [roll_item(random.choice(maps[chosen_map]["small_items"])) for _ in range(2)]
+        option2 = [roll_item(random.choice(maps[chosen_map]["medium_items"]))]
         loot_obtained.append(("Option 1: 2 small items", option1))
         loot_obtained.append(("Option 2: 1 medium item", option2))
 
     elif 18 <= D20 <= 19:
         mission_message = "Mission success! You found 1 large item OR 2 medium items."
         st.write(mission_message)
-        option1 = [roll_item(random.choice(maps[map_name]["large_items"]))]
-        option2 = [roll_item(random.choice(maps[map_name]["medium_items"])) for _ in range(2)]
+        option1 = [roll_item(random.choice(maps[chosen_map]["large_items"]))]
+        option2 = [roll_item(random.choice(maps[chosen_map]["medium_items"])) for _ in range(2)]
         loot_obtained.append(("Option 1: 1 large item", option1))
         loot_obtained.append(("Option 2: 2 medium items", option2))
 
     elif D20 == 20:
         mission_message = "YO! You got a nice li’l haul! 5 small items and 1 large item!"
         st.write(mission_message)
-        loot_obtained.extend([("Main Loot", [roll_item(random.choice(maps[map_name]["small_items"])) for _ in range(5)] + [roll_item(random.choice(maps[map_name]["large_items"]))])])
+        loot_obtained.extend([("Main Loot", [roll_item(random.choice(maps[chosen_map]["small_items"])) for _ in range(5)] + [roll_item(random.choice(maps[chosen_map]["large_items"]))])])
 
     for i, item_group in enumerate(loot_obtained):
         if isinstance(item_group, tuple):
@@ -176,7 +174,7 @@ if roll_button:
                     locker_roll = random.randint(1, 20)
                     locker_text = f"Locked locker roll: {locker_roll} DC 15"
                     if locker_roll >= 15:
-                        locker_items = roll_locker(map_name)
+                        locker_items = roll_locker(chosen_map)
                         locker_text += f" -> Success! Inside: {locker_items}"
                     else:
                         locker_text += " -> Failed to open the locker."
@@ -189,7 +187,7 @@ if roll_button:
                 locker_roll = random.randint(1, 20)
                 locker_text = f"Locked locker roll: {locker_roll} DC 15"
                 if locker_roll >= 15:
-                    locker_items = roll_locker(map_name)
+                    locker_items = roll_locker(chosen_map)
                     locker_text += f" -> Success! Inside: {locker_items}"
                 else:
                     locker_text += " -> Failed to open the locker."

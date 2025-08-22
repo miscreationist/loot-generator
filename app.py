@@ -105,9 +105,6 @@ penalties_table = [
     "You were chased until you reached your campfire, but any time you try to scavenge again you feel something following you until you reach your campfire. You are unable to scavenge until the next day"
 ]
 
-# ========================
-# HELPERS
-# ========================
 def roll_dice(text):
     dice_match = re.findall(r'(\d+)d(\d+)', text)
     for match in dice_match:
@@ -117,7 +114,6 @@ def roll_dice(text):
     return text
 
 def roll_item(item, map_name):
-    # Special case handling
     if item == "Blue plants bundle [special]":
         count = random.randint(1, 6)
         effects = []
@@ -144,11 +140,7 @@ def roll_item(item, map_name):
         amount = random.randint(1, 5) + 1
         choice = random.choice(["medkits", "toolboxes"])
         return f"Storage crate: Contains {amount} {choice} [+1 to trials you bring it to]"
-
-    # Normal dice replacement
     item = roll_dice(item)
-
-    # Handle [choose:]
     choose_match = re.search(r"\[choose: (.+?)\]", item)
     if choose_match:
         options = choose_match.group(1).split(", ")
@@ -168,9 +160,6 @@ def roll_locker(map_name):
     result = random.choice(maps[map_name]["locker_table"])
     return roll_item(result, map_name)
 
-# ========================
-# STREAMLIT APP
-# ========================
 st.title("Scavenging")
 
 map_options = ["Random Map"] + list(maps.keys())
@@ -232,7 +221,6 @@ if st.button("Roll D20"):
         st.write(mission_message)
         loot_obtained.extend([("Main Loot", [roll_item(random.choice(maps[chosen_map]["small_items"]), chosen_map) for _ in range(5)] + [roll_item(random.choice(maps[chosen_map]["large_items"]), chosen_map)])])
 
-    # Locker resolution
     for i, item_group in enumerate(loot_obtained):
         if isinstance(item_group, tuple):
             title, items = item_group
@@ -260,8 +248,6 @@ if st.button("Roll D20"):
                 else:
                     locker_text += " -> Failed to open the locker."
                 loot_obtained[i] = locker_text
-
-    # Print results
     if loot_obtained:
         st.write("You obtained:")
         for item_group in loot_obtained:
@@ -272,3 +258,4 @@ if st.button("Roll D20"):
                     st.write(f"{idx}. {item}")
             else:
                 st.write(f"- {item_group}")
+
